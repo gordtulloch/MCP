@@ -4,7 +4,6 @@ lxml
 numpy
 opencv-python
 pillow
-pyindi-client
 pyserial
 pysolar
 pytz
@@ -13,3 +12,5 @@ scikit-image
 scipy
 shapely
 tensorflow
+timeloop
+git+https://github.com/indilib/pyindi-client.git

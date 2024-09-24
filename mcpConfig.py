@@ -44,6 +44,12 @@ class McpConfig():
                 'ALLSKYSAMPLEDIR'  : 
                   '/home/stellarmate/allskyimages',         # Directory for sample images from allskycam
                 'ALLSKYSAMPLERATE'  : '10',                 # How many images to wait before sampling
+                'MQTTSERVER'      : 'localhost',              # MQTT host
+                'MQTTPORT'      : '1883',                   # MQTT port
+                'MQTTTOPIC'     : 'mcp',                    # MQTT topic
+                'MQTTUSER'      : 'indi-allsky',            # MQTT user
+                'MQTTPASS'      : 'foobar123',              # MQTT password
+                'MTTENABLE'     : 'true',                   # Enable MQTT
             }
             with open(self.file_path, 'w') as configfile:
                 self.config.write(configfile)

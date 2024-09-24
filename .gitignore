@@ -1,3 +1,6 @@
+*.ini
+*.venv/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -26,6 +29,7 @@ share/python-wheels/
 *.egg
 MANIFEST
 staticfiles/
+
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -126,6 +130,7 @@ celerybeat.pid
 .venv
 env/
 venv/
+.venv/
 ENV/
 env.bak/
 venv.bak/
