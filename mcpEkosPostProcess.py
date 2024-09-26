@@ -1,8 +1,7 @@
 ############################################################################################################
-#
-# Name        : postProcess.py
-# Purpose     : Script to call after an image is taken to give it a standard name, add it to an index 
-#               database, and move it to a repository
+## M C P  E K O S   P O S T   P R O C E S S                                                               ##
+############################################################################################################
+# Description : This script is used to process images taken by Ekos and store them in a repository.       
 # Author      : Gord Tulloch
 # Date        : January 25 2024
 # License     : GPL v3
@@ -12,7 +11,7 @@
 #               is also being run
 # TODO:
 #      - Calibrate image prior to storing and stacking it (master dark/flat/bias)
-#
+#      - Include non-FITS files in the processing
 ############################################################################################################ 
 import os
 from astropy.io import fits
@@ -224,8 +223,18 @@ class EkosPostProcess(object):
                     logging.warning("File not added to repo - no FRAME card - "+str(os.path.join(root, file)))
                     
 if __name__ == "__main__":
-    ekosPostProcess=EkosPostProcess()
-    ekosPostProcess.processImageToFile()
-    ekosPostProcess.con.close()
+    config = McpConfig()
+
+    source=config.get("EKOSIMAGEFOLDER")
+    if (config.get("REPOSTORE")=="GCS"):
+        logging.info("Processing images with GCS from "+source)
+        logging.error("GCS not implemented yet")
+    elif (config.get("REPOSTORE")=="File"):
+        logging.info("Processing images with GFile Processing from "+source)
+        logging.error("File Processing not implemented yet")
+        #ekosPostProcess=EkosPostProcess()
+        #ekosPostProcess.processImageToFile()
+        #ekosPostProcess.con.close()
+    
     logging.info("Finished processing images")
     exit(0)

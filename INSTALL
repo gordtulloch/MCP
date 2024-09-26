@@ -5,6 +5,18 @@ To install Obsy first clone the repository from github:
 
 git clone https://github.com/gordtulloch/obsy.git
 
+sudo apt --assume-yes install libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev libncurses5-dev \
+libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev libpng-dev libnova-dev libdbus-1-dev libdbus-glib-1-2 \
+libdbus-glib-1-dev swig cmake libindi-dev git-all wget curl llvm unzip software-properties-common
+
+If using Google Cloud Services
+
+export GCSFUSE_REPO=gcsfuse-`lsb_release -c -s`
+echo "deb https://packages.cloud.google.com/apt $GCSFUSE_REPO main" | sudo tee /etc/apt/sources.list.d/gcsfuse.list
+curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+sudp apt update
+sudo apt install fuse gcsfuse
+
 Create a new virtual environment for Obsy
 
 python -m venv .venv
