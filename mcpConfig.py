@@ -44,12 +44,17 @@ class McpConfig():
                 'ALLSKYSAMPLEDIR'  : 
                   '/home/stellarmate/allskyimages',         # Directory for sample images from allskycam
                 'ALLSKYSAMPLERATE'  : '10',                 # How many images to wait before sampling
+                # Support for MQTT link to HA
                 'MQTTSERVER'      : 'localhost',              # MQTT host
                 'MQTTPORT'      : '1883',                   # MQTT port
                 'MQTTTOPIC'     : 'mcp',                    # MQTT topic
                 'MQTTUSER'      : 'indi-allsky',            # MQTT user
                 'MQTTPASS'      : 'foobar123',              # MQTT password
+                # Support for EKOS Post Processing
                 'MTTENABLE'     : 'true',                   # Enable MQTT
+                'REPOSTORE'     : 'File',                   # File or S3
+                'REPOFOLDER'  : '/home/stellarmate/obsy/REPOSITORY/', # Location of the Main image repository (if File)
+                'EKOSIMAGEFOLDER': '/home/stellarmate/Pictures/', # Location of the EKOS image folder
             }
             with open(self.file_path, 'w') as configfile:
                 self.config.write(configfile)

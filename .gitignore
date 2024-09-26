@@ -1,6 +1,3 @@
-*.ini
-*.venv/
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -8,6 +5,9 @@ __pycache__/
 
 # C extensions
 *.so
+
+# INI files
+*.ini
 
 # Distribution / packaging
 .Python
