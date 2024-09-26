@@ -57,11 +57,18 @@ class McpConfig():
                 'ALLSKYSAMPLERATE'  : '10',                 # How many images to wait before sampling
                 # Support for MQTT link to HA
                 'MTTENABLE'     : 'true',                   # Enable MQTT
-                'MQTTSERVER'      : 'localhost',              # MQTT host
+                'MQTTSERVER'      : 'localhost',            # MQTT host
                 'MQTTPORT'      : '1883',                   # MQTT port
                 'MQTTTOPIC'     : 'mcp',                    # MQTT topic
                 'MQTTUSER'      : 'indi-allsky',            # MQTT user
                 'MQTTPASS'      : 'foobar123',              # MQTT password
+                # RDBMS
+                'DBPACKAGE'    : 'mariadb',                # mariadb or sqlite
+                'DBNAME'      : 'obsy',                    # Database name 
+                'DBUSER'      : 'obsy',                    # Database user
+                'DBPASS'      : 'obsy',                    # Database password  
+                'DBHOST'      : 'localhost',               # Database host
+                'DBPORT'      : '5432',                    # Database port
             }
             with open(self.file_path, 'w') as configfile:
                 self.config.write(configfile)

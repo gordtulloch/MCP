@@ -35,12 +35,13 @@ class EkosPostProcess(object):
         self.sourceFolder=self.config.get("EKOSIMAGEFOLDER")
         self.repoFolder=self.config.get("REPOFOLDER")
         self.dbName = self.repoFolder+"obsy.db"
-        self.con = sqlite3.connect(self.dbName)
-        self.cur = self.con.cursor()
+ 
         self.createDBTables()
 
     # Function definitions
     def submitFileToDB(fileName, hdr):
+        con = sqlite3.connect(self.config.get("DBNAME"))
+        cur = self.con.cursor()
         if "DATE-OBS" in hdr:
             uuidStr=uuid.uuid4()
             sqlStmt="INSERT INTO fitsFile (unid, date, filename) VALUES ('{0}','{1}','{2}')".format(uuidStr,hdr["DATE-OBS"],fileName)
@@ -224,17 +225,16 @@ class EkosPostProcess(object):
                     
 if __name__ == "__main__":
     config = McpConfig()
-
     source=config.get("EKOSIMAGEFOLDER")
+
     if (config.get("REPOSTORE")=="GCS"):
         logging.info("Processing images with GCS from "+source)
         logging.error("GCS not implemented yet")
     elif (config.get("REPOSTORE")=="File"):
         logging.info("Processing images with GFile Processing from "+source)
         logging.error("File Processing not implemented yet")
-        #ekosPostProcess=EkosPostProcess()
-        #ekosPostProcess.processImageToFile()
-        #ekosPostProcess.con.close()
+        ekosPostProcess=EkosPostProcess()
+        ekosPostProcess.processImageToFile()
     
     logging.info("Finished processing images")
     exit(0)

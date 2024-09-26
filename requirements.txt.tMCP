@@ -3,3 +3,4 @@ dbus-python
 numpy
 pyserial
 pytz
+mariadb
