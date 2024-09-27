@@ -19,7 +19,7 @@ from pathlib import Path
 from datetime import datetime
 from mcpConfig import McpConfig
 
-DEBUG=True
+DEBUG=False
 
 # Set up logging
 import logging
@@ -43,12 +43,10 @@ class McpEkosPostProcess(object):
         self.con = sqlite3.connect(self.dbName)
         self.cur = self.con.cursor()
         self.repoFolder=self.config.get("REPOFOLDER")
-        self.dbName = self.repoFolder+"obsy.db"
- 
         self.createDBTables()
 
     # Function definitions
-    def submitFileToDB(self,fileName, hdr):
+    def submitFileToDB(self,fileName,hdr):
         con = sqlite3.connect(self.config.get("DBNAME"))
         cur = con.cursor()
         if "DATE-OBS" in hdr:
@@ -112,8 +110,6 @@ class McpEkosPostProcess(object):
         
                 hdr = hdul[0].header
                 if "FRAME" in hdr:
-                    print(os.path.join(root, file))
-
                     # Create an os-friendly date
                     try:
                         datestr=hdr["DATE-OBS"].replace("T", " ")
@@ -128,19 +124,22 @@ class McpEkosPostProcess(object):
                     if (hdr["FRAME"]=="Light"):
                         # Adjust the WCS for the image
                         if "CD1_1" not in hdr:
-                            fitsCDELT1=float(hdr["CDELT1"])
-                            fitsCDELT2=float(hdr["CDELT2"])
-                            fitsCROTA2=float(hdr["CROTA2"])
-                            fitsCD1_1 =  fitsCDELT1 * cos(fitsCROTA2)
-                            fitsCD1_2 = -fitsCDELT2 * sin(fitsCROTA2)
-                            fitsCD2_1 =  fitsCDELT1 * sin (fitsCROTA2)
-                            fitsCD2_2 = fitsCDELT2 * cos(fitsCROTA2)
-                            hdr.append(('CD1_1', str(fitsCD1_1), 'Adjusted via MCP'), end=True)
-                            hdr.append(('CD1_2', str(fitsCD1_2), 'Adjusted via MCP'), end=True)
-                            hdr.append(('CD2_1', str(fitsCD2_1), 'Adjusted via MCP'), end=True)
-                            hdr.append(('CD2_2', str(fitsCD2_2), 'Adjusted via MCP'), end=True)
-                            hdul.flush()  # changes are written back to original.fits
-                            
+                            if "CDELT1" in hdr:
+                                fitsCDELT1=float(hdr["CDELT1"])
+                                fitsCDELT2=float(hdr["CDELT2"])
+                                fitsCROTA2=float(hdr["CROTA2"])
+                                fitsCD1_1 =  fitsCDELT1 * cos(fitsCROTA2)
+                                fitsCD1_2 = -fitsCDELT2 * sin(fitsCROTA2)
+                                fitsCD2_1 =  fitsCDELT1 * sin (fitsCROTA2)
+                                fitsCD2_2 = fitsCDELT2 * cos(fitsCROTA2)
+                                hdr.append(('CD1_1', str(fitsCD1_1), 'Adjusted via MCP'), end=True)
+                                hdr.append(('CD1_2', str(fitsCD1_2), 'Adjusted via MCP'), end=True)
+                                hdr.append(('CD2_1', str(fitsCD2_1), 'Adjusted via MCP'), end=True)
+                                hdr.append(('CD2_2', str(fitsCD2_2), 'Adjusted via MCP'), end=True)
+                                hdul.flush()  # changes are written back to original.fits
+                            else:
+                                logging.warning("No WCS information in header, file not updated is "+str(os.path.join(root, file)))
+
                         # Assign a new name
                         if ("OBJECT" in hdr):
                             if ("FILTER" in hdr):
@@ -154,10 +153,10 @@ class McpEkosPostProcess(object):
                             continue
                     elif hdr["FRAME"]=="Flat":
                         if ("FILTER" in hdr):
-                            newName="{0}-{1}-{2}-{3}-{4}-{5}s-{6}x{7}-t{8}.fits".format(hdr["OBJECT"].replace(" ", "_"),hdr["TELESCOP"].replace(" ", "_").replace("\\", "_"),
+                            newName="{0}-{1}-{2}-{3}-{4}-{5}s-{6}x{7}-t{8}.fits".format(hdr["FRAME"],hdr["TELESCOP"].replace(" ", "_").replace("\\", "_"),
                                             hdr["INSTRUME"].replace(" ", "_"),hdr["FILTER"],fitsDate,hdr["EXPTIME"],hdr["XBINNING"],hdr["YBINNING"],hdr["CCD-TEMP"])
                         else:
-                            newName=newName="{0}-{1}-{2}-{3}-{4}-{5}s-{6}x{7}-t{8}.fits".format(hdr["OBJECT"].replace(" ", "_"),hdr["TELESCOP"].replace(" ", "_").replace("\\", "_"),
+                            newName=newName="{0}-{1}-{2}-{3}-{4}-{5}s-{6}x{7}-t{8}.fits".format(hdr["FRAME"],hdr["TELESCOP"].replace(" ", "_").replace("\\", "_"),
                                             hdr["INSTRUME"].replace(" ", "_"),"OSC",fitsDate,hdr["EXPTIME"],hdr["XBINNING"],hdr["YBINNING"],hdr["CCD-TEMP"])
                     elif hdr["FRAME"]=="Dark" or hdr["FRAME"]=="Bias":
                         newName="{0}-{1}-{1}-{2}-{3}s-{4}x{5}-t{6}.fits".format(hdr["FRAME"],hdr["TELESCOP"].replace(" ", "_").replace("\\", "_"),
@@ -190,9 +189,8 @@ class McpEkosPostProcess(object):
 
                     # If we can add the file to the database move it to the repo
                     if (self.submitFileToDB(newPath+newName.replace(" ", "_"),hdr)):
-                        if DEBUG:
-                            moveInfo="Moving {0} to {1}\n".format(os.path.join(root, file),newPath+newName)
-                            logging.info(moveInfo)
+                        moveInfo="Moving {0} to {1}\n".format(os.path.join(root, file),newPath+newName)
+                        logging.info(moveInfo)
                         shutil.move(os.path.join(root, file),newPath+newName)
                     else:
                         logging.warning("Warning: File not added to repo is "+str(os.path.join(root, file)))
