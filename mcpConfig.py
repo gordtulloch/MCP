@@ -50,8 +50,8 @@ class McpConfig():
                 'MQTTTOPIC'     : 'mcp',                    # MQTT topic
                 'MQTTUSER'      : 'indi-allsky',            # MQTT user
                 'MQTTPASS'      : 'foobar123',              # MQTT password
-                # Support for EKOS Post Processing
                 'MTTENABLE'     : 'true',                   # Enable MQTT
+                # Support for EKOS Post Processing
                 'REPOSTORE'     : 'File',                   # File or S3
                 'REPOFOLDER'  : '/home/stellarmate/obsy/REPOSITORY/', # Location of the Main image repository (if File)
                 'EKOSIMAGEFOLDER': '/home/stellarmate/Pictures/', # Location of the EKOS image folder

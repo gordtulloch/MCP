@@ -9,6 +9,10 @@ __pycache__/
 # INI files
 *.ini
 
+# Sample / test data
+sample/
+REPOSITORY/
+
 # Distribution / packaging
 .Python
 build/
