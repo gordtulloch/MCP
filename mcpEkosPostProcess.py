@@ -50,9 +50,8 @@ class McpEkosPostProcess(object):
 
     # Function definitions
     def submitFileToDB(self,fileName, hdr):
-    def submitFileToDB(fileName, hdr):
         con = sqlite3.connect(self.config.get("DBNAME"))
-        cur = self.con.cursor()
+        cur = con.cursor()
         if "DATE-OBS" in hdr:
             uuidStr=uuid.uuid4()
             sqlStmt="INSERT INTO fitsFile (unid, date, filename) VALUES ('{0}','{1}','{2}')".format(uuidStr,hdr["DATE-OBS"],fileName)
