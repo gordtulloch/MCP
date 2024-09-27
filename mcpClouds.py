@@ -1,4 +1,7 @@
-import sys
+#############################################################################################################
+## m c p C L O U D S                                                                                       ##
+#############################################################################################################
+# detect clouds from an All Sky Camera image using a pre-trained Keras model
 import argparse
 from pathlib import Path
 import time
@@ -37,9 +40,9 @@ class McpClouds(object):
         # Set up the image paths if required
         if not os.path.exists(config.get("ALLSKYSAMPLEDIR")):
             os.makedirs(config.get("ALLSKYSAMPLEDIR"))
-        with CLASS_NAMES as className:
+        for className in self.CLASS_NAMES:
             if not os.path.exists(config.get("ALLSKYSAMPLEDIR")+"/"+className):
-            os.makedirs(config.get("ALLSKYSAMPLEDIR")+"/"+className)
+                os.makedirs(config.get("ALLSKYSAMPLEDIR")+"/"+className)
 
     def isCloudy(self,allSkyOutput=False,allskysampling=False):
         logger.info('Using keras model: %s', KERAS_MODEL)
