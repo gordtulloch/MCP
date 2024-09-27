@@ -1,16 +1,14 @@
-#!/usr/bin/env python3
-#############################################################################################################
-## C O N F I G                                                                                             ##
-#############################################################################################################
-# Script to call after an image is taken to give it a standard name, add it to an index database, and 
-# move it to a repository
+############################################################################################################
+## M C P  E K O S   P O S T   P R O C E S S                                                               ##
+############################################################################################################
+# Description : This script is used to process images taken by Ekos and store them in a repository.       
 # Author      : Gord Tulloch
 # Date        : January 25 2024
 # TODO:
 #      - Add support for non-FITS images like JPG and TIFF Exif data
 #      - Add support for other databases like MySQL
 #      - Calibrate image prior to storing and stacking it (master dark/flat/bias)
-#
+#      - Include non-FITS files in the processing
 ############################################################################################################ 
 import os
 from astropy.io import fits
@@ -45,10 +43,16 @@ class McpEkosPostProcess(object):
         self.dbName = self.fileRepoFolder+"obsy.db"
         self.con = sqlite3.connect(self.dbName)
         self.cur = self.con.cursor()
+        self.repoFolder=self.config.get("REPOFOLDER")
+        self.dbName = self.repoFolder+"obsy.db"
+ 
         self.createDBTables()
 
     # Function definitions
     def submitFileToDB(self,fileName, hdr):
+    def submitFileToDB(fileName, hdr):
+        con = sqlite3.connect(self.config.get("DBNAME"))
+        cur = self.con.cursor()
         if "DATE-OBS" in hdr:
             uuidStr=uuid.uuid4()
             sqlStmt="INSERT INTO fitsFile (unid, date, filename) VALUES ('{0}','{1}','{2}')".format(uuidStr,hdr["DATE-OBS"],fileName)
@@ -201,5 +205,17 @@ class McpEkosPostProcess(object):
 if __name__ == "__main__":
     ekosPostProcess=McpEkosPostProcess()
     ekosPostProcess.processImage()
+    config = McpConfig()
+    source=config.get("EKOSIMAGEFOLDER")
+
+    if (config.get("REPOSTORE")=="GCS"):
+        logging.info("Processing images with GCS from "+source)
+        logging.error("GCS not implemented yet")
+    elif (config.get("REPOSTORE")=="File"):
+        logging.info("Processing images with GFile Processing from "+source)
+        logging.error("File Processing not implemented yet")
+        ekosPostProcess=EkosPostProcess()
+        ekosPostProcess.processImageToFile()
+    
     logging.info("Finished processing images")
     exit(0)

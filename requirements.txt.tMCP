@@ -1,6 +1,6 @@
 astropy
 dbus-python
 numpy
-pyindi-client
 pyserial
 pytz
+mariadb
