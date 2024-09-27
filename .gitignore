@@ -9,6 +9,9 @@ __pycache__/
 # INI files
 *.ini
 
+# Database files
+*.db
+
 # Sample / test data
 sample/
 REPOSITORY/

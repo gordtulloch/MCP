@@ -8,7 +8,6 @@
 #      - Add support for non-FITS images like JPG and TIFF Exif data
 #      - Add support for other databases like MySQL
 #      - Calibrate image prior to storing and stacking it (master dark/flat/bias)
-#      - Include non-FITS files in the processing
 ############################################################################################################ 
 import os
 from astropy.io import fits
