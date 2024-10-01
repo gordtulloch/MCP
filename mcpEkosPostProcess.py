@@ -200,7 +200,6 @@ class McpEkosPostProcess(object):
     
 if __name__ == "__main__":
     ekosPostProcess=McpEkosPostProcess()
-    ekosPostProcess.processImage()
     config = McpConfig()
     source=config.get("EKOSIMAGEFOLDER")
 
@@ -208,10 +207,7 @@ if __name__ == "__main__":
         logging.info("Processing images with GCS from "+source)
         logging.error("GCS not implemented yet")
     elif (config.get("REPOSTORE")=="File"):
-        logging.info("Processing images with GFile Processing from "+source)
-        logging.error("File Processing not implemented yet")
-        ekosPostProcess=EkosPostProcess()
-        ekosPostProcess.processImageToFile()
-    
+        logging.info("Processing images with File Processing from "+source)
+        ekosPostProcess.processImage()
     logging.info("Finished processing images")
     exit(0)

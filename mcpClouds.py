@@ -18,7 +18,6 @@ import os
 import shutil
 
 from mcpConfig import McpConfig
-config=McpConfig()
 
 sys.path.append(str(Path(__file__).parent.absolute().parent))
 
@@ -35,14 +34,14 @@ class McpClouds(object):
     )
     
     def __init__(self):
-        self.config = config
+        self.config = McpConfig()
         self.imageCount=0
         # Set up the image paths if required
-        if not os.path.exists(config.get("ALLSKYSAMPLEDIR")):
-            os.makedirs(config.get("ALLSKYSAMPLEDIR"))
+        if not os.path.exists(self.config.get("ALLSKYSAMPLEDIR")):
+            os.makedirs(self.config.get("ALLSKYSAMPLEDIR"))
         for className in self.CLASS_NAMES:
-            if not os.path.exists(config.get("ALLSKYSAMPLEDIR")+"/"+className):
-                os.makedirs(config.get("ALLSKYSAMPLEDIR")+"/"+className)
+            if not os.path.exists(self.config.get("ALLSKYSAMPLEDIR")+"/"+className):
+                os.makedirs(self.config.get("ALLSKYSAMPLEDIR")+"/"+className)
 
     def isCloudy(self,allSkyOutput=False,allskysampling=False):
         logger.info('Using keras model: %s', KERAS_MODEL)
@@ -68,7 +67,7 @@ class McpClouds(object):
                     exit(0)
             else:
                 # Grab the image file from whereever
-                image_file = config.get("ALLSKY_IMAGE")
+                image_file = self.config.get("ALLSKY_IMAGE")
         image_file='/var/www/html/allsky/images/'+image_file[0]
         logger.info('Loading image: %s', image_file)
         
@@ -88,8 +87,8 @@ class McpClouds(object):
             f.close()
 
         # If allskysampling turned on save a copy of the image if count = allskysamplerate
-        if (self.imageCount==config.get("ALLSKYSAMPLERATE")):
-            shutil.copy(image_file, config.get("ALLSKYSAMPLEDIR")+"/"+result)
+        if (self.imageCount==self.config.get("ALLSKYSAMPLERATE")):
+            shutil.copy(image_file, self.config.get("ALLSKYSAMPLEDIR")+"/"+result)
             self.imageCount=0
         else:
             self.imageCount+=1
