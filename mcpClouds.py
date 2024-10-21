@@ -1,31 +1,24 @@
-#############################################################################################################
-## m c p C L O U D S                                                                                       ##
-#############################################################################################################
-# detect clouds from an All Sky Camera image using a pre-trained Keras model
-import argparse
-from pathlib import Path
-import time
-from datetime import datetime
-from datetime import timedelta
-import numpy
-import cv2
-import PIL
-from PIL import Image
-import logging
-import sqlite3
 import keras
-import os
+import sys
+from pathlib import Path
+import numpy as np
+from PIL import Image, ImageOps  # Install pillow instead of PIL
+import sqlite3
 import shutil
+import os
+import datetime
+import paho.mqtt.client as mqtt
 
 from mcpConfig import McpConfig
+config=McpConfig()
+
+import logging
+logger = logging.getLogger("mcpClouds")
 
 sys.path.append(str(Path(__file__).parent.absolute().parent))
 
-logger = logging.getLogger("mcpClouds")
-
-KERAS_MODEL = 'keras_model.h5'
-
-# derived from indi-allsky by Aaron Morris https://github.com/aaronwmorris/indi-allsky.git thanks Aaron!
+# OO version derived from indi-allsky by Aaron Morris https://github.com/aaronwmorris/indi-allsky.git thanks Aaron!
+# Original derived from Google Teaching Machine output
 
 class McpClouds(object):
     CLASS_NAMES = (
@@ -34,21 +27,22 @@ class McpClouds(object):
     )
     
     def __init__(self):
-        self.config = McpConfig()
-        self.imageCount=0
-        # Set up the image paths if required
-        if not os.path.exists(self.config.get("ALLSKYSAMPLEDIR")):
-            os.makedirs(self.config.get("ALLSKYSAMPLEDIR"))
-        for className in self.CLASS_NAMES:
-            if not os.path.exists(self.config.get("ALLSKYSAMPLEDIR")+"/"+className):
-                os.makedirs(self.config.get("ALLSKYSAMPLEDIR")+"/"+className)
+        self.config = config
+        logger.info('Using keras model: %s', config.get("KERASMODEL"))
+        self.model = keras.models.load_model(config.get("KERASMODEL"), compile=False)
+        if self.config.get("ALLSKYSAMPLING")=="True":
+            if not os.path.exists(self.config.get("ALLSKYSAMPLEDIR")):
+                os.makedirs(self.config.get("ALLSKYSAMPLEDIR"))
+            for className in self.CLASS_NAMES:
+                if not os.path.exists(self.config.get("ALLSKYSAMPLEDIR")+"/"+className):
+                    os.makedirs(self.config.get("ALLSKYSAMPLEDIR")+"/"+className)
+            self.imageCount=1
 
-    def isCloudy(self,allSkyOutput=False,allskysampling=False):
-        logger.info('Using keras model: %s', KERAS_MODEL)
-        self.model = keras.models.load_model(KERAS_MODEL, compile=False)
-
+    def isCloudy(self):
         if (self.config.get("ALLSKYCAM") == "NONE"):
             logger.error('No allsky camera for cloud detection')
+            print('ERROR: No allsky camera for cloud detection, exiting')
+            exit(0)
         else:
             if (self.config.get("ALLSKYCAM") == "INDI-ALLSKY"):
                 # Query the database for the latest file
@@ -60,57 +54,72 @@ class McpClouds(object):
                     ' ORDER BY image.createDate DESC LIMIT 1'
                     logger.info('Running SQL Statement: '+sqlStmt)
                     cur.execute(sqlStmt)
-                    image_file=cur.fetchone()
+                    image_file='/var/www/html/allsky/images/'+cur.fetchone()[0]
                     conn.close()
                 except sqlite3.Error as e:
                     logger.error("SQLITE Error accessing indi-allsky "+str(e))
+                    print("SQLITE Error accessing indi-allsky "+str(e)+", exiting")
                     exit(0)
             else:
-                # Grab the image file from whereever
-                image_file = self.config.get("ALLSKY_IMAGE")
-        image_file='/var/www/html/allsky/images/'+image_file[0]
+                # Grab the image file from whereever 
+                image_file = config.get("ALLSKYFILE")
         logger.info('Loading image: %s', image_file)
         
-        ### PIL
-        try:
-            with Image.open(str(image_file)) as img:
-                image_data = cv2.cvtColor(numpy.array(img), cv2.COLOR_RGB2BGR)
-        except PIL.UnidentifiedImageError:
-            logger.error('Invalid image file: %s', image_file)
-            return True
+        result=self.detect(image_file).replace('\n', '')
 
-        result=self.detect(image_data)
-        if (allSkyOutput):
-            filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'allskycam.txt')
-            f = open(filename, "w")
-            f.write(result)
-            f.close()
-
+              
         # If allskysampling turned on save a copy of the image if count = allskysamplerate
-        if (self.imageCount==self.config.get("ALLSKYSAMPLERATE")):
-            shutil.copy(image_file, self.config.get("ALLSKYSAMPLEDIR")+"/"+result)
-            self.imageCount=0
-        else:
-            self.imageCount+=1
+        if self.config.get("ALLSKYSAMPLING") == "True":
+            logging.info('Sampling image count ' + str(self.imageCount))
+            if self.imageCount == int(self.config.get("ALLSKYSAMPLERATE")):
+                # Get the current date and time
+                current_datetime = datetime.datetime.now()
+                # Format the date and time as a string
+                date_str = current_datetime.strftime("%Y%m%d_%H%M%S")
+                # Create a filename with the current date
+                filename = f"image_{date_str}.jpg"
+                destination_path = self.config.get('ALLSKYSAMPLEDIR')+"/"+result+"/"+filename
+                shutil.copy(image_file, destination_path)
+                logging.info(f"Copying {image_file} to {destination_path}")
+                self.imageCount = 1
+            else:
+                self.imageCount += 1    
 
-        return (result != 'Clear')
+        return (result != 'Clear',result)
 
-    def detect(self, image):
-        thumbnail = cv2.resize(image, (224, 224))
-        normalized_thumbnail = (thumbnail.astype(numpy.float32) / 127.5) - 1
-        data = numpy.ndarray(shape=(1, 224, 224, 3), dtype=numpy.float32)
-        data[0] = normalized_thumbnail
-        detect_start = time.time()
+    def detect(self, imagePath):
+         # Load the labels
+        class_names = open(config.get("KERASLABEL"), "r").readlines()
+
+        # Create the array of the right shape to feed into the keras model
+        # The 'length' or number of images you can put into the array is
+        # determined by the first position in the shape tuple, in this case 1
+        data = np.ndarray(shape=(1, 224, 224, 3), dtype=np.float32)
+
+        # Replace this with the path to your image
+        image = Image.open(config.get("ALLSKYFILE")).convert("RGB")
+
+        # resizing the image to be at least 224x224 and then cropping from the center
+        size = (224, 224)
+        image = ImageOps.fit(image, size, Image.Resampling.LANCZOS)
+
+        # turn the image into a numpy array
+        image_array = np.asarray(image)
+
+        # Normalize the image
+        normalized_image_array = (image_array.astype(np.float32) / 127.5) - 1
+
+        # Load the image into the array
+        data[0] = normalized_image_array
 
         # Predicts the model
         prediction = self.model.predict(data)
-        idx = numpy.argmax(prediction)
-        class_name = self.CLASS_NAMES[idx]
-        confidence_score = (prediction[0][idx]).astype(numpy.float32)
+        index = np.argmax(prediction)
+        class_name = class_names[index]
+        confidence_score = prediction[0][index]
 
-        detect_elapsed_s = time.time() - detect_start
-        logger.info('Cloud detection in %0.4f s', detect_elapsed_s)
-        logger.info('Rating: %s, Confidence %0.3f', class_name, confidence_score)
-        
-        return(class_name)
+        # Print prediction and confidence score
+        logger.info("Class:"+str(class_name[2:]).replace('\n', ''))
+        logger.info("Confidence Score:"+str(confidence_score))
 
+        return(class_name[2:])

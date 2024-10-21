@@ -69,7 +69,6 @@ class McpConfig():
                 'DBPASS'      : 'obsy',                    # Database password  
                 'DBHOST'      : 'localhost',               # Database host
                 'DBPORT'      : '5432',                    # Database port
-                'MTTENABLE'     : 'true',                   # Enable MQTT
                 # Support for EKOS Post Processing
                 'REPOSTORE'     : 'File',                   # File or S3
                 'REPOFOLDER'  : '/home/stellarmate/obsy/REPOSITORY/', # Location of the Main image repository (if File)
