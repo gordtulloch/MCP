@@ -131,7 +131,7 @@ while runMCP:
 			obsyState="Open Pending"
 			pendingCount=1
 		if obsyState == "Open Pending":
-			pendingCount=1
+			pendingCount +=1
 		if pendingCount==maxPending: 
 			obsyState="Open"
 			domeClient.unpark()
